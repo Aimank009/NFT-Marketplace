@@ -12,6 +12,7 @@ contract NFTCollection is ERC721, Ownable, INFTCollection, NFTCollectionEvents {
     string private baseTokenURI;
     bool public mintingPaused;
     uint256 public mintPrice;
+    address public minter;
 
     constructor(
         string memory name,
@@ -25,9 +26,35 @@ contract NFTCollection is ERC721, Ownable, INFTCollection, NFTCollectionEvents {
         mintPrice = _mintPrice;
     }
 
+    modifier onlyMinterOrOwner() {
+        require(
+            msg.sender == owner() || msg.sender == minter,
+            "Not authorized"
+        );
+        _;
+    }
+
+    function setMinter(address _minter) external onlyOwner {
+        minter = _minter;
+    }
+
     function mint(address _to) external payable override returns (uint256) {
         require(nextTokenId < maxSupply, "Cannot mint more tokens");
         require(msg.value >= mintPrice, "Insufficient payment");
+        require(!mintingPaused, "Minting is paused");
+        uint256 tempNextTokenId = nextTokenId;
+        nextTokenId++;
+        _safeMint(_to, tempNextTokenId);
+
+        emit NFTMinted(_to, tempNextTokenId);
+
+        return tempNextTokenId;
+    }
+
+    function minterMint(
+        address _to
+    ) external onlyMinterOrOwner returns (uint256) {
+        require(nextTokenId < maxSupply, "Cannot mint more tokens");
         require(!mintingPaused, "Minting is paused");
         uint256 tempNextTokenId = nextTokenId;
         nextTokenId++;
@@ -75,5 +102,11 @@ contract NFTCollection is ERC721, Ownable, INFTCollection, NFTCollectionEvents {
         require(balance > 0, "Insufficient balance");
         (bool success, ) = payable(owner()).call{value: balance}("");
         require(success, "Withdraw failed");
+    }
+
+    function setMintPrice(uint256 _setMintPrice) external onlyOwner {
+        uint256 oldMintPrice = mintPrice;
+        mintPrice = _setMintPrice;
+        emit MintPriceUpdated(oldMintPrice, mintPrice);
     }
 }
