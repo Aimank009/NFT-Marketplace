@@ -35,4 +35,8 @@ contract NFTCollection is ERC721, Ownable, INFTCollection, NFTCollectionEvents {
     function totalSupply() external view override returns (uint256) {
         return nextTokenId;
     }
+
+    function baseURI() external view override returns (string memory) {
+        return baseTokenURI;
+    }
 }
