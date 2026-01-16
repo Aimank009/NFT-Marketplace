@@ -6,4 +6,5 @@ interface INFTCollection {
     function totalSupply() external view returns (uint256);
     function maxSupply() external view returns (uint256);
     function baseURI() external view returns (string memory);
+    function minterMint(address to) external returns (uint256);
 }
